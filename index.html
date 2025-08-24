@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mela vs UV Villain</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: #e0f7fa;
+  }
+  #gameArea {
+    position: relative;
+    width: 600px;
+    height: 400px;
+    margin: 20px auto;
+    border: 2px solid #333;
+    background: #aee1f9;
+    overflow: hidden;
+  }
+  #mela, #villain {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+  }
+  #mela {
+    bottom: 10px;
+    left: 260px;
+  }
+  #villain {
+    top: 10px;
+    left: 260px;
+  }
+  .ray {
+    position: absolute;
+    width: 10px;
+    height: 40px;
+    background: orange;
+    top: 100px;
+    left: 295px;
+  }
+  #buttons {
+    margin-top: 20px;
+  }
+  button {
+    padding: 10px 15px;
+    margin: 0 10px;
+    font-size: 16px;
+  }
+  #message {
+    margin-top: 15px;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+
+<h1>Mela vs UV Villain</h1>
+
+<div id="gameArea">
+  <img id="mela" src="https://heyclipart.com/cdn/shop/files/2-mole-in-hole-vector-cartoon-illustration-42.jpg" alt="Mela">
+  <img id="villain" src="https://st2.depositphotos.com/3250055/8394/v/950/depositphotos_83944362-stock-illustration-evil-cartoon-sun.jpg" alt="UV Villain">
+</div>
+
+<div id="buttons">
+  <button onclick="protect('hat')">Hat</button>
+  <button onclick="protect('sunscreen')">Sunscreen ✅</button>
+  <button onclick="protect('shade')">Shade</button>
+</div>
+
+<div id="message"></div>
+
+<script>
+let villainHealth = 3;
+let rayInterval;
+let activeRay = null;
+
+function startRay() {
+  const gameArea = document.getElementById('gameArea');
+  
+  // create the ray
+  const ray = document.createElement('div');
+  ray.classList.add('ray');
+  gameArea.appendChild(ray);
+  activeRay = ray;
+  
+  let topPos = 100;
+  const fall = setInterval(() => {
+    if (topPos >= 350) {
+      // ray reached Mela
+      clearInterval(fall);
+      gameArea.removeChild(ray);
+      activeRay = null;
+      showMessage('UV hit Mela! 😢', 'red');
+    } else {
+      topPos += 5;
+      ray.style.top = topPos + 'px';
+    }
+  }, 30);
+}
+
+function protect(option) {
+  if (!activeRay) return; // no active ray
+  if (option === 'sunscreen') {
+    // correct protection
+    activeRay.remove();
+    activeRay = null;
+    villainHealth--;
+    showMessage('Blocked the UV ray! 😎', 'green');
+    if (villainHealth <= 0) {
+      showMessage('Mela defeated the UV Villain! 🎉', 'blue');
+      clearInterval(rayInterval);
+    }
+  } else {
+    // wrong protection
+    showMessage('Wrong choice! UV got through! 😢', 'red');
+  }
+}
+
+// start rays every 3 seconds
+rayInterval = setInterval(startRay, 3000);
+
+function showMessage(text, color) {
+  const msg = document.getElementById('message');
+  msg.textContent = text;
+  msg.style.color = color;
+}
+</script>
+
+</body>
+</html>
