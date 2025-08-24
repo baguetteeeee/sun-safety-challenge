@@ -15,7 +15,7 @@
     height: 400px;
     margin: 20px auto;
     border: 2px solid #333;
-    background: #aee1f9;
+    background: white;
     overflow: hidden;
   }
   #mela, #villain {
@@ -51,34 +51,54 @@
     margin-top: 15px;
     font-weight: bold;
   }
+  .health-container {
+    width: 200px;
+    height: 20px;
+    border: 2px solid #333;
+    margin: 10px auto;
+    background: #eee;
+  }
+  .health-bar {
+    height: 100%;
+    width: 100%;
+    background: green;
+  }
 </style>
 </head>
 <body>
 
 <h1>Mela vs UV Villain</h1>
 
+<div class="health-container">UV Villain</div>
+<div id="villainHealthBar" class="health-bar"></div>
+
 <div id="gameArea">
   <img id="mela" src="https://heyclipart.com/cdn/shop/files/2-mole-in-hole-vector-cartoon-illustration-42.jpg" alt="Mela">
   <img id="villain" src="https://st2.depositphotos.com/3250055/8394/v/950/depositphotos_83944362-stock-illustration-evil-cartoon-sun.jpg" alt="UV Villain">
 </div>
 
-<div id="buttons">
-  <button onclick="protect('hat')">Hat</button>
-  <button onclick="protect('sunscreen')">Sunscreen ✅</button>
-  <button onclick="protect('shade')">Shade</button>
-</div>
+<div class="health-container">Mela</div>
+<div id="melaHealthBar" class="health-bar" style="background: blue;"></div>
+
+<div id="buttons"></div>
 
 <div id="message"></div>
 
 <script>
 let villainHealth = 3;
+let melaHealth = 3;
 let rayInterval;
 let activeRay = null;
 
+// Correct and wrong options
+const correctOptions = ["Sunscreen ✅", "Hat ✅", "Shade ✅", "Sunglasses ✅"];
+const wrongOptionsPool = [
+  "Wear short sleeves", "Jump in a puddle", "Eat ice cream", "Dance in the sun", "Cover eyes with hands", "Sit on the grass", "Drink water"
+];
+
+// Create UV ray
 function startRay() {
   const gameArea = document.getElementById('gameArea');
-  
-  // create the ray
   const ray = document.createElement('div');
   ray.classList.add('ray');
   gameArea.appendChild(ray);
@@ -87,11 +107,13 @@ function startRay() {
   let topPos = 100;
   const fall = setInterval(() => {
     if (topPos >= 350) {
-      // ray reached Mela
       clearInterval(fall);
       gameArea.removeChild(ray);
       activeRay = null;
+      melaHealth--;
+      updateHealthBars();
       showMessage('UV hit Mela! 😢', 'red');
+      checkGameOver();
     } else {
       topPos += 5;
       ray.style.top = topPos + 'px';
@@ -99,25 +121,79 @@ function startRay() {
   }, 30);
 }
 
+// Set randomized buttons
+function setButtons() {
+  const buttonsDiv = document.getElementById('buttons');
+  buttonsDiv.innerHTML = "";
+
+  // Pick 1 correct option
+  const correct = correctOptions[Math.floor(Math.random() * correctOptions.length)];
+
+  // Pick 2 unique wrong options
+  let options = [correct];
+  while (options.length < 3) {
+    let rand = wrongOptionsPool[Math.floor(Math.random() * wrongOptionsPool.length)];
+    if (!options.includes(rand)) options.push(rand);
+  }
+
+  // Shuffle
+  options.sort(() => Math.random() - 0.5);
+
+  // Create buttons
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.textContent = opt;
+    btn.onclick = () => protect(opt);
+    buttonsDiv.appendChild(btn);
+  });
+}
+
+// Handle protection
 function protect(option) {
-  if (!activeRay) return; // no active ray
-  if (option === 'sunscreen') {
-    // correct protection
-    activeRay.remove();
+  if (!activeRay) return; 
+  if (correctOptions.includes(option)) {
+    const ray = activeRay;
     activeRay = null;
-    villainHealth--;
+    // animate ray bounce back
+    let pos = parseInt(ray.style.top);
+    const bounce = setInterval(() => {
+      if (pos <= 10) {
+        clearInterval(bounce);
+        ray.remove();
+        villainHealth--;
+        updateHealthBars();
+        checkGameOver();
+      } else {
+        pos -= 5;
+        ray.style.top = pos + 'px';
+        ray.style.background = 'red';
+      }
+    }, 20);
     showMessage('Blocked the UV ray! 😎', 'green');
-    if (villainHealth <= 0) {
-      showMessage('Mela defeated the UV Villain! 🎉', 'blue');
-      clearInterval(rayInterval);
-    }
   } else {
-    // wrong protection
     showMessage('Wrong choice! UV got through! 😢', 'red');
   }
 }
 
-// start rays every 3 seconds
+function updateHealthBars() {
+  document.getElementById('villainHealthBar').style.width = (villainHealth/3*100) + "%";
+  document.getElementById('melaHealthBar').style.width = (melaHealth/3*100) + "%";
+}
+
+function checkGameOver() {
+  if (villainHealth <= 0) {
+    showMessage('Mela defeated the UV Villain! 🎉', 'blue');
+    clearInterval(rayInterval);
+  } else if (melaHealth <= 0) {
+    showMessage('Mela got defeated! 😢', 'red');
+    clearInterval(rayInterval);
+  } else {
+    setButtons();
+  }
+}
+
+// Initialize
+setButtons();
 rayInterval = setInterval(startRay, 3000);
 
 function showMessage(text, color) {
