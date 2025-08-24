@@ -38,6 +38,7 @@
     background: orange;
     top: 100px;
     left: 295px;
+    transition: top 0.03s linear;
   }
   #buttons {
     margin-top: 20px;
@@ -46,6 +47,7 @@
     padding: 10px 15px;
     margin: 0 10px;
     font-size: 16px;
+    cursor: pointer;
   }
   #message {
     margin-top: 15px;
@@ -62,6 +64,7 @@
     height: 100%;
     width: 100%;
     background: green;
+    transition: width 0.3s;
   }
   #certificateCanvas {
     margin-top: 20px;
@@ -98,12 +101,12 @@ let rayInterval;
 let activeRay = null;
 
 // Correct and wrong options
-const correctOptions = ["Sunscreen ✅", "Hat ✅", "Shade ✅", "Sunglasses ✅"];
+const correctOptions = ["Sunscreen", "Hat", "Shade", "Sunglasses"];
 const wrongOptionsPool = [
   "Wear short sleeves", "Jump in a puddle", "Eat ice cream", "Dance in the sun", "Cover eyes with hands", "Sit on the grass", "Drink water"
 ];
 
-// Create UV ray
+// Smooth ray creation
 function startRay() {
   const gameArea = document.getElementById('gameArea');
   const ray = document.createElement('div');
@@ -113,28 +116,26 @@ function startRay() {
   
   let topPos = 100;
   const fall = setInterval(() => {
+    topPos += 3; // smooth step
+    ray.style.top = topPos + 'px';
     if (topPos >= 350) {
       clearInterval(fall);
-      gameArea.removeChild(ray);
+      if (ray.parentNode) ray.parentNode.removeChild(ray);
       activeRay = null;
       melaHealth--;
       updateHealthBars();
       showMessage('UV hit Mela! 😢', 'red');
       checkGameOver();
-    } else {
-      topPos += 5;
-      ray.style.top = topPos + 'px';
     }
-  }, 30);
+  }, 20);
 }
 
-// Set randomized buttons
+// Randomized buttons
 function setButtons() {
   const buttonsDiv = document.getElementById('buttons');
   buttonsDiv.innerHTML = "";
 
   const correct = correctOptions[Math.floor(Math.random() * correctOptions.length)];
-
   let options = [correct];
   while (options.length < 3) {
     let rand = wrongOptionsPool[Math.floor(Math.random() * wrongOptionsPool.length)];
@@ -151,40 +152,42 @@ function setButtons() {
   });
 }
 
-// Handle protection
+// Protect function with smooth bounce
 function protect(option) {
   if (!activeRay) return; 
+  const ray = activeRay;
+  activeRay = null;
   if (correctOptions.includes(option)) {
-    const ray = activeRay;
-    activeRay = null;
     let pos = parseInt(ray.style.top);
     const bounce = setInterval(() => {
+      pos -= 5;
+      ray.style.top = pos + 'px';
+      ray.style.background = 'red';
       if (pos <= 10) {
         clearInterval(bounce);
-        ray.remove();
+        if (ray.parentNode) ray.parentNode.removeChild(ray);
         villainHealth--;
         updateHealthBars();
         checkGameOver();
-      } else {
-        pos -= 5;
-        ray.style.top = pos + 'px';
-        ray.style.background = 'red';
       }
     }, 20);
     showMessage('Blocked the UV ray! 😎', 'green');
   } else {
-    showMessage('Wrong choice! UV got through! 😢', 'red');
+    if (ray.parentNode) ray.parentNode.removeChild(ray);
     melaHealth--;
     updateHealthBars();
+    showMessage('Wrong choice! UV got through! 😢', 'red');
     checkGameOver();
   }
 }
 
+// Update health bars
 function updateHealthBars() {
   document.getElementById('villainHealthBar').style.width = (villainHealth/5*100) + "%";
   document.getElementById('melaHealthBar').style.width = (melaHealth/5*100) + "%";
 }
 
+// Check game over
 function checkGameOver() {
   if (villainHealth <= 0) {
     clearInterval(rayInterval);
@@ -200,13 +203,14 @@ function checkGameOver() {
   }
 }
 
+// Show messages
 function showMessage(text, color) {
   const msg = document.getElementById('message');
   msg.textContent = text;
   msg.style.color = color;
 }
 
-// Certificate
+// Certificate generation with curved text
 function generateCertificate() {
   const name = prompt("Congratulations! Enter your name for the certificate:");
   if (!name) return;
@@ -217,12 +221,31 @@ function generateCertificate() {
   const img = new Image();
   img.src = 'https://iili.io/KJag612.md.png';
   img.onload = function() {
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    // Write name onto banner
+    // Center image and keep aspect
+    const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+    const x = (canvas.width - img.width * scale)/2;
+    const y = (canvas.height - img.height * scale)/2 + 20;
+    ctx.drawImage(img, x, y, img.width*scale, img.height*scale);
+
+    // Draw curved text
     ctx.font = "30px Arial";
     ctx.fillStyle = "black";
     ctx.textAlign = "center";
-    ctx.fillText(name, canvas.width/2, 220); // adjust Y to fit banner
+    const radius = 100;
+    const text = name;
+    const centerX = canvas.width/2;
+    const centerY = y + 160; // adjust vertical position
+    const startAngle = -Math.PI/2 - (text.length/2 * 0.12); // adjust curve
+
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const angle = startAngle + i*0.12;
+      ctx.save();
+      ctx.translate(centerX + radius * Math.cos(angle), centerY + radius * Math.sin(angle));
+      ctx.rotate(angle + Math.PI/2);
+      ctx.fillText(char, 0, 0);
+      ctx.restore();
+    }
   }
 }
 
