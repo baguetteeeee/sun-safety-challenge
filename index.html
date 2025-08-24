@@ -52,7 +52,7 @@
     font-weight: bold;
   }
   .health-container {
-    width: 200px;
+    width: 300px;
     height: 20px;
     border: 2px solid #333;
     margin: 10px auto;
@@ -62,6 +62,11 @@
     height: 100%;
     width: 100%;
     background: green;
+  }
+  #certificateCanvas {
+    margin-top: 20px;
+    display: none;
+    border: 1px solid #333;
   }
 </style>
 </head>
@@ -78,15 +83,17 @@
 </div>
 
 <div class="health-container">Mela</div>
-<div id="melaHealthBar" class="health-bar" style="background: blue;"></div>
+<div id="melaHealthBar" class="health-bar"></div>
 
 <div id="buttons"></div>
 
 <div id="message"></div>
 
+<canvas id="certificateCanvas" width="600" height="400"></canvas>
+
 <script>
-let villainHealth = 3;
-let melaHealth = 3;
+let villainHealth = 5;
+let melaHealth = 5;
 let rayInterval;
 let activeRay = null;
 
@@ -126,20 +133,16 @@ function setButtons() {
   const buttonsDiv = document.getElementById('buttons');
   buttonsDiv.innerHTML = "";
 
-  // Pick 1 correct option
   const correct = correctOptions[Math.floor(Math.random() * correctOptions.length)];
 
-  // Pick 2 unique wrong options
   let options = [correct];
   while (options.length < 3) {
     let rand = wrongOptionsPool[Math.floor(Math.random() * wrongOptionsPool.length)];
     if (!options.includes(rand)) options.push(rand);
   }
 
-  // Shuffle
   options.sort(() => Math.random() - 0.5);
 
-  // Create buttons
   options.forEach(opt => {
     const btn = document.createElement('button');
     btn.textContent = opt;
@@ -154,7 +157,6 @@ function protect(option) {
   if (correctOptions.includes(option)) {
     const ray = activeRay;
     activeRay = null;
-    // animate ray bounce back
     let pos = parseInt(ray.style.top);
     const bounce = setInterval(() => {
       if (pos <= 10) {
@@ -172,23 +174,55 @@ function protect(option) {
     showMessage('Blocked the UV ray! 😎', 'green');
   } else {
     showMessage('Wrong choice! UV got through! 😢', 'red');
+    melaHealth--;
+    updateHealthBars();
+    checkGameOver();
   }
 }
 
 function updateHealthBars() {
-  document.getElementById('villainHealthBar').style.width = (villainHealth/3*100) + "%";
-  document.getElementById('melaHealthBar').style.width = (melaHealth/3*100) + "%";
+  document.getElementById('villainHealthBar').style.width = (villainHealth/5*100) + "%";
+  document.getElementById('melaHealthBar').style.width = (melaHealth/5*100) + "%";
 }
 
 function checkGameOver() {
   if (villainHealth <= 0) {
+    clearInterval(rayInterval);
     showMessage('Mela defeated the UV Villain! 🎉', 'blue');
-    clearInterval(rayInterval);
+    setButtons([]);
+    generateCertificate();
   } else if (melaHealth <= 0) {
-    showMessage('Mela got defeated! 😢', 'red');
     clearInterval(rayInterval);
+    showMessage('Mela got defeated! 😢', 'red');
+    setButtons([]);
   } else {
     setButtons();
+  }
+}
+
+function showMessage(text, color) {
+  const msg = document.getElementById('message');
+  msg.textContent = text;
+  msg.style.color = color;
+}
+
+// Certificate
+function generateCertificate() {
+  const name = prompt("Congratulations! Enter your name for the certificate:");
+  if (!name) return;
+
+  const canvas = document.getElementById('certificateCanvas');
+  canvas.style.display = 'block';
+  const ctx = canvas.getContext('2d');
+  const img = new Image();
+  img.src = 'https://iili.io/KJag612.md.png';
+  img.onload = function() {
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    // Write name onto banner
+    ctx.font = "30px Arial";
+    ctx.fillStyle = "black";
+    ctx.textAlign = "center";
+    ctx.fillText(name, canvas.width/2, 220); // adjust Y to fit banner
   }
 }
 
@@ -196,11 +230,6 @@ function checkGameOver() {
 setButtons();
 rayInterval = setInterval(startRay, 3000);
 
-function showMessage(text, color) {
-  const msg = document.getElementById('message');
-  msg.textContent = text;
-  msg.style.color = color;
-}
 </script>
 
 </body>
