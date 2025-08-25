@@ -1,219 +1,357 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Mela vs UV Villain</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background-color: #f0f0f0;
-    }
-    #game {
-      border: 3px solid black;
-      width: 800px;
-      height: 500px;
-      margin: 20px auto;
-      background-color: white;
-      position: relative;
-      overflow: hidden;
-    }
-    .character {
-      position: absolute;
-      width: 150px;
-    }
-    #mela {
-      bottom: 50px;
-      left: 50px;
-    }
-    #uv {
-      top: 50px;
-      right: 50px;
-    }
-    .health-bar {
-      width: 200px;
-      height: 20px;
-      background-color: #ccc;
-      border: 2px solid #000;
-      margin: 10px;
-      position: relative;
-    }
-    .health {
-      height: 100%;
-      background-color: green;
-      width: 100%;
-    }
-    #beam {
-      width: 10px;
-      height: 0;
-      background-color: yellow;
-      position: absolute;
-      left: 0;
-      top: 0;
-      display: none;
-    }
-    #question {
-      margin: 20px;
-      font-size: 18px;
-    }
-    .option {
-      margin: 5px;
-      padding: 10px 20px;
-      border: 1px solid #333;
-      background-color: #eee;
-      cursor: pointer;
-      display: inline-block;
-    }
-    #certificate {
-      display: none;
-      margin-top: 20px;
-      position: relative;
-    }
-    #certificate img {
-      width: 600px;
-    }
-    #certName {
-      position: absolute;
-      top: 67%;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 28px;
-      font-weight: bold;
-      color: #333;
-      font-family: "Times New Roman", serif;
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>Mela vs UV Villain</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: #f0f8ff;
+    margin: 0;
+    padding: 20px 0;
+  }
+
+  /* Health UI */
+  .health-wrap {
+    width: 360px;
+    margin: 6px auto 12px;
+    text-align: left;
+  }
+  .health-wrap .label {
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .bar {
+    height: 18px;
+    background: #eee;
+    border: 2px solid #333;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(to right, #2ecc71, #27ae60);
+    transition: width 0.25s linear;
+  }
+
+  /* Game area */
+  #gameArea {
+    position: relative;
+    width: 640px;
+    height: 460px;
+    margin: 10px auto 16px;
+    border: 2px solid #333;
+    background: #fff; /* white inside */
+    overflow: hidden;
+  }
+
+  /* Images: centered, not squashed */
+  #mela, #villain {
+    position: absolute;
+    width: 140px;
+    height: auto;      /* keep aspect ratio */
+    left: 50%;
+    transform: translateX(-50%);
+    user-select: none;
+    pointer-events: none;
+  }
+  #villain { top: 8px; }
+  #mela    { bottom: 0px; } /* a bit lower, per your request */
+
+  /* UV ray */
+  .ray {
+    position: absolute;
+    width: 10px;
+    height: 54px;
+    background: orange;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* Controls & messages */
+  #buttons { margin-top: 8px; }
+  button {
+    padding: 10px 14px;
+    margin: 0 8px 8px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  #message {
+    margin-top: 6px;
+    font-weight: bold;
+    min-height: 24px;
+  }
+
+  /* Certificate */
+  #certificateCanvas {
+    margin: 18px auto 0;
+    display: none;
+    border: 1px solid #333;
+    max-width: 95%;
+  }
+</style>
 </head>
 <body>
 
-  <h1>Mela vs UV Villain</h1>
+<h1>Mela vs UV Villain</h1>
 
-  <div id="game">
-    <div id="mela" class="character">
-      <img src="https://heyclipart.com/cdn/shop/files/2-mole-in-hole-vector-cartoon-illustration-42.jpg" width="150">
-    </div>
-    <div id="uv" class="character">
-      <img src="https://st2.depositphotos.com/3250055/8394/v/950/depositphotos_83944362-stock-illustration-evil-cartoon-sun.jpg" width="150">
-    </div>
-    <div id="beam"></div>
-  </div>
+<!-- UV health -->
+<div class="health-wrap">
+  <div class="label">UV Villain</div>
+  <div class="bar"><div id="uvFill" class="fill"></div></div>
+</div>
 
-  <div>
-    <div>Mela Health</div>
-    <div class="health-bar"><div id="melaHealth" class="health"></div></div>
-    <div>UV Villain Health</div>
-    <div class="health-bar"><div id="uvHealth" class="health"></div></div>
-  </div>
+<div id="gameArea">
+  <img id="villain" src="https://st2.depositphotos.com/3250055/8394/v/950/depositphotos_83944362-stock-illustration-evil-cartoon-sun.jpg" alt="UV Villain" />
+  <img id="mela"    src="https://heyclipart.com/cdn/shop/files/2-mole-in-hole-vector-cartoon-illustration-42.jpg" alt="Mela" />
+</div>
 
-  <div id="question">What’s the best sun-safe action?</div>
-  <div id="options"></div>
+<!-- Mela health -->
+<div class="health-wrap">
+  <div class="label">Mela</div>
+  <div class="bar"><div id="melaFill" class="fill"></div></div>
+</div>
 
-  <div id="certificate">
-    <img src="https://iili.io/KJag612.md.png" alt="Certificate">
-    <canvas id="certCanvas" width="600" height="400" style="position:absolute; top:0; left:50%; transform:translateX(-50%);"></canvas>
-  </div>
+<div id="buttons"></div>
+<div id="message"></div>
+
+<canvas id="certificateCanvas" width="800" height="500"></canvas>
 
 <script>
-  let melaHealth = 5;
-  let uvHealth = 5;
+  // ======== Game state ========
+  const MAX_HP = 5;
+  let uvHP = MAX_HP;
+  let melaHP = MAX_HP;
 
-  const correctOptions = ["Wear a hat", "Use sunscreen", "Stay in the shade", "Wear sunglasses"];
-  const wrongOptions = ["Wear short sleeves", "Go tanning", "Stay out at noon", "Ignore sunscreen"];
+  const uvFill = document.getElementById('uvFill');
+  const melaFill = document.getElementById('melaFill');
+  const buttonsDiv = document.getElementById('buttons');
+  const messageEl = document.getElementById('message');
+  const gameArea = document.getElementById('gameArea');
 
-  const melaHealthBar = document.getElementById("melaHealth");
-  const uvHealthBar = document.getElementById("uvHealth");
-  const optionsDiv = document.getElementById("options");
-  const beam = document.getElementById("beam");
+  // Ray animation state (with requestAnimationFrame)
+  let activeRay = null; // {el, y, state: 'falling'|'bouncing', lastT}
+  let spawner = null;
 
-  function updateHealth() {
-    melaHealthBar.style.width = (melaHealth/5*100) + "%";
-    uvHealthBar.style.width = (uvHealth/5*100) + "%";
-    if (melaHealth <= 0) {
-      alert("Mela lost! Stay sun safe next time.");
-    }
-    if (uvHealth <= 0) {
-      showCertificate();
-    }
+  // Options: exactly one correct each round
+  const correctOptions = ["Sunscreen", "Hat", "Shade", "Sunglasses"];
+  const wrongOptionsPool = [
+    "Wear short sleeves", "Jump in a puddle", "Eat ice cream",
+    "Dance in the sun", "Cover eyes with hands", "Sit on the grass", "Drink water"
+  ];
+
+  // ======== UI helpers ========
+  function updateHealthBars() {
+    uvFill.style.width = (uvHP / MAX_HP * 100) + '%';
+    melaFill.style.width = (melaHP / MAX_HP * 100) + '%';
   }
-
-  function newQuestion() {
-    optionsDiv.innerHTML = "";
-    let correct = correctOptions[Math.floor(Math.random()*correctOptions.length)];
-    let wrongs = [];
-    while (wrongs.length < 3) {
-      let w = wrongOptions[Math.floor(Math.random()*wrongOptions.length)];
-      if (!wrongs.includes(w)) wrongs.push(w);
+  function showMessage(text, color) {
+    messageEl.textContent = text;
+    messageEl.style.color = color || '#000';
+  }
+  function setButtons() {
+    buttonsDiv.innerHTML = '';
+    const correct = correctOptions[Math.floor(Math.random() * correctOptions.length)];
+    const opts = [correct];
+    while (opts.length < 3) {
+      const pick = wrongOptionsPool[Math.floor(Math.random() * wrongOptionsPool.length)];
+      if (!opts.includes(pick)) opts.push(pick);
     }
-    let answers = [correct, ...wrongs].sort(() => Math.random()-0.5);
-    answers.forEach(ans => {
-      let btn = document.createElement("div");
-      btn.className = "option";
-      btn.textContent = ans;
-      btn.onclick = () => checkAnswer(ans === correct);
-      optionsDiv.appendChild(btn);
+    opts.sort(() => Math.random() - 0.5);
+    opts.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.textContent = opt; // NO ticks; you must choose the right one :)
+      btn.addEventListener('click', () => protect(opt, correct));
+      buttonsDiv.appendChild(btn);
     });
   }
 
-  function checkAnswer(correct) {
-    beam.style.display = "block";
-    beam.style.height = "0px";
-    beam.style.left = "400px";
-    beam.style.top = "200px";
-    beam.style.backgroundColor = correct ? "red" : "yellow";
+  // ======== Ray logic (RAF, no glitches) ========
+  const FALL_SPEED = 180;   // px/sec
+  const BOUNCE_SPEED = 320; // px/sec
+  const RAY_TOP = 110;      // start Y
+  const RAY_TOP_LIMIT = 6;  // when bouncing reaches top
+  function startRay() {
+    if (activeRay) return;
+    const el = document.createElement('div');
+    el.className = 'ray';
+    el.style.top = RAY_TOP + 'px';
+    gameArea.appendChild(el);
 
-    let targetTop = correct ? 50 : 450;
+    activeRay = { el, y: RAY_TOP, state: 'falling', lastT: performance.now() };
+    requestAnimationFrame(stepRay);
+  }
+  function stepRay(now) {
+    if (!activeRay) return; // removed
+    const dt = Math.min(50, now - activeRay.lastT) / 1000; // cap big jumps
+    activeRay.lastT = now;
 
-    let grow = setInterval(() => {
-      let h = parseInt(beam.style.height);
-      beam.style.height = (h+10)+"px";
-      if (h > 200) {
-        clearInterval(grow);
-        beam.style.display = "none";
-        if (correct) {
-          uvHealth--;
-        } else {
-          melaHealth--;
-        }
-        updateHealth();
-        if (melaHealth > 0 && uvHealth > 0) {
-          newQuestion();
-        }
+    if (activeRay.state === 'falling') {
+      activeRay.y += FALL_SPEED * dt;
+      activeRay.el.style.top = activeRay.y + 'px';
+
+      const hitY = gameArea.clientHeight - 80; // near Mela's head
+      if (activeRay.y >= hitY) {
+        // FALL HIT
+        removeRay();
+        melaHP = Math.max(0, melaHP - 1);
+        updateHealthBars();
+        showMessage('UV hit Mela! 😢', 'red');
+        checkGameOverOrContinue();
+        return;
       }
-    }, 30);
+    } else if (activeRay.state === 'bouncing') {
+      activeRay.y -= BOUNCE_SPEED * dt;
+      activeRay.el.style.top = activeRay.y + 'px';
+      if (activeRay.y <= RAY_TOP_LIMIT) {
+        // BOUNCE REACHED TOP -> UV takes damage
+        removeRay();
+        uvHP = Math.max(0, uvHP - 1);
+        updateHealthBars();
+        showMessage('Blocked the UV ray! 😎', 'green');
+        checkGameOverOrContinue();
+        return;
+      }
+    }
+
+    requestAnimationFrame(stepRay);
+  }
+  function removeRay() {
+    if (!activeRay) return;
+    const el = activeRay.el;
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+    activeRay = null;
   }
 
-  function showCertificate() {
-    let name = prompt("You defeated UV Villain! Enter your name for the certificate:");
-    document.getElementById("certificate").style.display = "block";
-    let canvas = document.getElementById("certCanvas");
-    let ctx = canvas.getContext("2d");
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-
-    ctx.font = "28px Times New Roman";
-    ctx.fillStyle = "#333";
-
-    let text = name;
-    let centerX = canvas.width / 2;
-    let baseY = canvas.height * 0.67;
-
-    let radius = 150; // curve radius
-    let angleStep = Math.PI / (text.length * 1.5);
-
-    for (let i=0; i<text.length; i++) {
-      let char = text[i];
-      let angle = - (text.length/2 - i) * angleStep;
-      let x = centerX + Math.sin(angle) * radius;
-      let y = baseY - Math.cos(angle) * radius/2;
-      ctx.save();
-      ctx.translate(x,y);
-      ctx.rotate(angle/3);
-      ctx.fillText(char,0,0);
-      ctx.restore();
+  // Answer handling
+  function protect(selected, correct) {
+    if (!activeRay) return;
+    // stop falling instantly to prevent "hit" after success
+    if (activeRay.state === 'falling' && selected === correct) {
+      activeRay.state = 'bouncing';
+      activeRay.el.style.background = 'red'; // turns red immediately and goes back up
+      return;
+    }
+    if (selected !== correct) {
+      // wrong: immediate hit
+      removeRay();
+      melaHP = Math.max(0, melaHP - 1);
+      updateHealthBars();
+      showMessage('Wrong choice! UV got through! 😢', 'red');
+      checkGameOverOrContinue();
     }
   }
 
-  newQuestion();
-  updateHealth();
+  // Game flow
+  function checkGameOverOrContinue() {
+    if (uvHP <= 0) {
+      stopSpawner();
+      buttonsDiv.innerHTML = '';
+      showMessage('Mela defeated the UV Villain! 🎉', 'blue');
+      generateCertificate();
+    } else if (melaHP <= 0) {
+      stopSpawner();
+      buttonsDiv.innerHTML = '';
+      showMessage('Mela got defeated! 😢', 'red');
+    } else {
+      setButtons();
+    }
+  }
+  function startSpawner() {
+    setButtons();
+    if (spawner) clearInterval(spawner);
+    // spawn first ray after a moment, then every 2.8s
+    setTimeout(startRay, 800);
+    spawner = setInterval(startRay, 2800);
+  }
+  function stopSpawner() {
+    if (spawner) clearInterval(spawner);
+    spawner = null;
+    removeRay();
+  }
+
+  // ======== Certificate with upward-curved, upright letters ========
+  function generateCertificate() {
+    const name = prompt("Congratulations! Enter your name for the certificate:");
+    if (!name) return;
+
+    const canvas = document.getElementById('certificateCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.style.display = 'block';
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous'; // try to allow canvas draw (depends on host headers)
+    img.src = 'https://iili.io/KJag612.md.png';
+
+    img.onload = function() {
+      const cw = canvas.width, ch = canvas.height;
+      const iw = img.width, ih = img.height;
+      const scale = Math.min(cw / iw, ch / ih);
+      const drawW = iw * scale, drawH = ih * scale;
+      const dx = (cw - drawW) / 2;
+      const dy = (ch - drawH) / 2 + 10; // nudge down a little
+
+      // clear + draw image centered, not squashed
+      ctx.clearRect(0, 0, cw, ch);
+      ctx.drawImage(img, dx, dy, drawW, drawH);
+
+      // text settings
+      let fontSize = 38; // tweak to fit banner
+      ctx.font = `bold ${fontSize}px Arial`;
+      ctx.fillStyle = 'black';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // center of the arc: roughly 1/3 from bottom of the drawn image
+      const centerX = cw / 2;
+      const centerY = dy + drawH * (2 / 3); // 1/3 from bottom
+      const radius = Math.min(drawW, drawH) * 0.34; // adjust to match banner curve
+      const letterSpacing = 2.0; // px of extra spacing so letters don’t squish
+
+      drawTextOnArcUpright(ctx, name, centerX, centerY, radius, letterSpacing);
+    };
+  }
+
+  // Curve letters along an upward arc but keep each letter upright (not sideways).
+  function drawTextOnArcUpright(ctx, text, cx, cy, radius, letterSpacingPx) {
+    // measure total width incl. spacing
+    let totalPx = 0;
+    const widths = [];
+    for (let i = 0; i < text.length; i++) {
+      const w = ctx.measureText(text[i]).width;
+      widths.push(w);
+      totalPx += w;
+      if (i < text.length - 1) totalPx += letterSpacingPx;
+    }
+    // convert pixel length to angle length (arc length s = r*theta)
+    const anglePerPx = 1 / radius;
+    const totalAngle = totalPx * anglePerPx;
+
+    // place along bottom (smile) centered horizontally
+    let angle = Math.PI + totalAngle / 2; // start at right end
+    for (let i = 0; i < text.length; i++) {
+      const half = widths[i] / 2;
+      const halfAngle = half * anglePerPx;
+
+      angle -= halfAngle; // center of this character
+      const x = cx + radius * Math.cos(angle);
+      const y = cy + radius * Math.sin(angle);
+
+      // Draw character upright (no rotation), positioned on arc
+      ctx.fillText(text[i], x, y);
+
+      angle -= halfAngle;
+      if (i < text.length - 1) {
+        angle -= (letterSpacingPx * anglePerPx);
+      }
+    }
+  }
+
+  // ======== Init ========
+  updateHealthBars();
+  startSpawner();
 </script>
 </body>
 </html>
