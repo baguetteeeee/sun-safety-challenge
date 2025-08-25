@@ -316,19 +316,14 @@
 
   // Curve letters along an upward arc but keep each letter upright (not sideways).
   function drawTextOnArcUpright(ctx, text, cx, cy, radius, letterSpacingPx) {
-    const widths = text.split('').map(ch => ctx.measureText(ch).width);
+  // Measure total width including spacing
+  const widths = text.split('').map(ch => ctx.measureText(ch).width);
   const totalWidth = widths.reduce((a,b) => a+b, 0) + letterSpacingPx*(text.length-1);
 
   let startX = cx - totalWidth/2;
   for (let i = 0; i < text.length; i++) {
     const charWidth = widths[i];
-
-    // Slight curve: y offset rises near edges
-    const t = (i + 0.5) / text.length; // 0 (left) → 1 (right)
-    const curveOffset = Math.sin((t-0.5)*Math.PI) * -10; // adjust -10 for height of curve
-
-    ctx.fillText(text[i], startX + charWidth/2, cy + curveOffset);
-
+    ctx.fillText(text[i], startX + charWidth/2, cy);
     startX += charWidth + letterSpacingPx;
   }
   }
