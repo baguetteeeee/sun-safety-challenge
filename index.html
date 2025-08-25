@@ -1,107 +1,219 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Mela vs UV Villain</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    background: #f0f8ff;
-    margin: 0;
-    padding: 20px 0;
-  }
-
-  /* Health UI */
-  .health-wrap {
-    width: 360px;
-    margin: 6px auto 12px;
-    text-align: left;
-  }
-  .health-wrap .label {
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
-  .bar {
-    height: 18px;
-    background: #eee;
-    border: 2px solid #333;
-    border-radius: 10px;
-    overflow: hidden;
-  }
-  .fill {
-    height: 100%;
-    width: 100%;
-    background: linear-gradient(to right, #2ecc71, #27ae60);
-    transition: width 0.25s linear;
-  }
-
-  /* Game area */
-  #gameArea {
-    position: relative;
-    width: 640px;
-    height: 460px;
-    margin: 10px auto 16px;
-    border: 2px solid #333;
-    background: #fff; /* white inside */
-    overflow: hidden;
-  }
-
-  /* Images: centered, not squashed */
-  #mela, #villain {
-    position: absolute;
-    width: 140px;
-    height: auto;      /* keep aspect ratio */
-    left: 50%;
-    transform: translateX(-50%);
-    user-select: none;
-    pointer-events: none;
-  }
-  #villain { top: 8px; }
-  #mela    { bottom: 0px; } /* a bit lower */
-
-  /* UV ray */
-  .ray {
-    position: absolute;
-    width: 10px;
-    height: 54px;
-    background: orange;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-
-  /* Controls & messages */
-  #buttons { margin-top: 8px; }
-  button {
-    padding: 10px 14px;
-    margin: 0 8px 8px;
-    font-size: 16px;
-    cursor: pointer;
-  }
-  #message {
-    margin-top: 6px;
-    font-weight: bold;
-    min-height: 24px;
-  }
-
-  /* Certificate */
-  #certificateCanvas {
-    margin: 18px auto 0;
-    display: none;
-    border: 1px solid #333;
-    max-width: 95%;
-  }
-</style>
+  <meta charset="UTF-8">
+  <title>Mela vs UV Villain</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f0f0f0;
+    }
+    #game {
+      border: 3px solid black;
+      width: 800px;
+      height: 500px;
+      margin: 20px auto;
+      background-color: white;
+      position: relative;
+      overflow: hidden;
+    }
+    .character {
+      position: absolute;
+      width: 150px;
+    }
+    #mela {
+      bottom: 50px;
+      left: 50px;
+    }
+    #uv {
+      top: 50px;
+      right: 50px;
+    }
+    .health-bar {
+      width: 200px;
+      height: 20px;
+      background-color: #ccc;
+      border: 2px solid #000;
+      margin: 10px;
+      position: relative;
+    }
+    .health {
+      height: 100%;
+      background-color: green;
+      width: 100%;
+    }
+    #beam {
+      width: 10px;
+      height: 0;
+      background-color: yellow;
+      position: absolute;
+      left: 0;
+      top: 0;
+      display: none;
+    }
+    #question {
+      margin: 20px;
+      font-size: 18px;
+    }
+    .option {
+      margin: 5px;
+      padding: 10px 20px;
+      border: 1px solid #333;
+      background-color: #eee;
+      cursor: pointer;
+      display: inline-block;
+    }
+    #certificate {
+      display: none;
+      margin-top: 20px;
+      position: relative;
+    }
+    #certificate img {
+      width: 600px;
+    }
+    #certName {
+      position: absolute;
+      top: 67%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 28px;
+      font-weight: bold;
+      color: #333;
+      font-family: "Times New Roman", serif;
+    }
+  </style>
 </head>
 <body>
 
-<h1>Mela vs UV Villain</h1>
+  <h1>Mela vs UV Villain</h1>
 
-<!-- UV health -->
-<div class="health-wrap">
-  <div class="label">UV Villain</div>
-  <div class="bar"><div id="uvFill" class="fill"></div></div>
-</div>
+  <div id="game">
+    <div id="mela" class="character">
+      <img src="https://heyclipart.com/cdn/shop/files/2-mole-in-hole-vector-cartoon-illustration-42.jpg" width="150">
+    </div>
+    <div id="uv" class="character">
+      <img src="https://st2.depositphotos.com/3250055/8394/v/950/depositphotos_83944362-stock-illustration-evil-cartoon-sun.jpg" width="150">
+    </div>
+    <div id="beam"></div>
+  </div>
 
-<div id="gameArea">
-  <img id="villain" src="https://st2.depositphotos.com/3250055/8394/v/950/depositpho
+  <div>
+    <div>Mela Health</div>
+    <div class="health-bar"><div id="melaHealth" class="health"></div></div>
+    <div>UV Villain Health</div>
+    <div class="health-bar"><div id="uvHealth" class="health"></div></div>
+  </div>
+
+  <div id="question">What’s the best sun-safe action?</div>
+  <div id="options"></div>
+
+  <div id="certificate">
+    <img src="https://iili.io/KJag612.md.png" alt="Certificate">
+    <canvas id="certCanvas" width="600" height="400" style="position:absolute; top:0; left:50%; transform:translateX(-50%);"></canvas>
+  </div>
+
+<script>
+  let melaHealth = 5;
+  let uvHealth = 5;
+
+  const correctOptions = ["Wear a hat", "Use sunscreen", "Stay in the shade", "Wear sunglasses"];
+  const wrongOptions = ["Wear short sleeves", "Go tanning", "Stay out at noon", "Ignore sunscreen"];
+
+  const melaHealthBar = document.getElementById("melaHealth");
+  const uvHealthBar = document.getElementById("uvHealth");
+  const optionsDiv = document.getElementById("options");
+  const beam = document.getElementById("beam");
+
+  function updateHealth() {
+    melaHealthBar.style.width = (melaHealth/5*100) + "%";
+    uvHealthBar.style.width = (uvHealth/5*100) + "%";
+    if (melaHealth <= 0) {
+      alert("Mela lost! Stay sun safe next time.");
+    }
+    if (uvHealth <= 0) {
+      showCertificate();
+    }
+  }
+
+  function newQuestion() {
+    optionsDiv.innerHTML = "";
+    let correct = correctOptions[Math.floor(Math.random()*correctOptions.length)];
+    let wrongs = [];
+    while (wrongs.length < 3) {
+      let w = wrongOptions[Math.floor(Math.random()*wrongOptions.length)];
+      if (!wrongs.includes(w)) wrongs.push(w);
+    }
+    let answers = [correct, ...wrongs].sort(() => Math.random()-0.5);
+    answers.forEach(ans => {
+      let btn = document.createElement("div");
+      btn.className = "option";
+      btn.textContent = ans;
+      btn.onclick = () => checkAnswer(ans === correct);
+      optionsDiv.appendChild(btn);
+    });
+  }
+
+  function checkAnswer(correct) {
+    beam.style.display = "block";
+    beam.style.height = "0px";
+    beam.style.left = "400px";
+    beam.style.top = "200px";
+    beam.style.backgroundColor = correct ? "red" : "yellow";
+
+    let targetTop = correct ? 50 : 450;
+
+    let grow = setInterval(() => {
+      let h = parseInt(beam.style.height);
+      beam.style.height = (h+10)+"px";
+      if (h > 200) {
+        clearInterval(grow);
+        beam.style.display = "none";
+        if (correct) {
+          uvHealth--;
+        } else {
+          melaHealth--;
+        }
+        updateHealth();
+        if (melaHealth > 0 && uvHealth > 0) {
+          newQuestion();
+        }
+      }
+    }, 30);
+  }
+
+  function showCertificate() {
+    let name = prompt("You defeated UV Villain! Enter your name for the certificate:");
+    document.getElementById("certificate").style.display = "block";
+    let canvas = document.getElementById("certCanvas");
+    let ctx = canvas.getContext("2d");
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    ctx.font = "28px Times New Roman";
+    ctx.fillStyle = "#333";
+
+    let text = name;
+    let centerX = canvas.width / 2;
+    let baseY = canvas.height * 0.67;
+
+    let radius = 150; // curve radius
+    let angleStep = Math.PI / (text.length * 1.5);
+
+    for (let i=0; i<text.length; i++) {
+      let char = text[i];
+      let angle = - (text.length/2 - i) * angleStep;
+      let x = centerX + Math.sin(angle) * radius;
+      let y = baseY - Math.cos(angle) * radius/2;
+      ctx.save();
+      ctx.translate(x,y);
+      ctx.rotate(angle/3);
+      ctx.fillText(char,0,0);
+      ctx.restore();
+    }
+  }
+
+  newQuestion();
+  updateHealth();
+</script>
+</body>
+</html>
